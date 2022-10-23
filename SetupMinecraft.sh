@@ -11,6 +11,8 @@ Version="1.19.2"
 # Set to AllowLocalCopy="1" if you make changes to the script otherwise any changes will be discarded and the latest online version will run
 AllowLocalCopy="0"
 
+FileSource="https://raw.githubusercontent.com/lufixSch/RaspberryPiMinecraft/master"
+
 # Custom Directory
 # You can change this to a custom directory -- it is meant to be the root directory that contains everything (not including the "minecraft" folder part)
 DirName=$(readlink -e ~)
@@ -108,7 +110,7 @@ Get_ServerMemory() {
     Print_Style "INFO: You are running a 64-bit architecture, which means you can use more than 2700MB of RAM for the Minecraft server." "$YELLOW"
   fi
   MemSelected=0
-  RecommendedMemory=$(($AvailableMemory - 400))
+  RecommendedMemory=$(echo $AvailableMemory | awk '{print int($0 - 0.1 * $0)}')
   while [[ $MemSelected -lt 600 || $MemSelected -ge $TotalMemory ]]; do
     echo -n "Enter amount of memory in megabytes to dedicate to the Minecraft server (recommended: $RecommendedMemory): "
     read MemSelected </dev/tty
@@ -134,7 +136,7 @@ Update_Scripts() {
 
   # Download start.sh from repository
   Print_Style "Grabbing start.sh from repository..." "$YELLOW"
-  curl -H "Accept-Encoding: identity" -L -o start.sh https://raw.githubusercontent.com/TheRemote/RaspberryPiMinecraft/master/start.sh
+  curl -H "Accept-Encoding: identity" -L -o start.sh $FileSource/start.sh
   chmod +x start.sh
   sed -i "s:dirname:$DirName:g" start.sh
   sed -i "s:memselect:$MemSelected:g" start.sh
@@ -143,21 +145,21 @@ Update_Scripts() {
 
   # Download stop.sh from repository
   echo "Grabbing stop.sh from repository..."
-  curl -H "Accept-Encoding: identity" -L -o stop.sh https://raw.githubusercontent.com/TheRemote/RaspberryPiMinecraft/master/stop.sh
+  curl -H "Accept-Encoding: identity" -L -o stop.sh $FileSource/stop.sh
   chmod +x stop.sh
   sed -i "s:dirname:$DirName:g" stop.sh
   sed -i "s<pathvariable<$PATH<g" stop.sh
 
   # Download restart.sh from repository
   echo "Grabbing restart.sh from repository..."
-  curl -H "Accept-Encoding: identity" -L -o restart.sh https://raw.githubusercontent.com/TheRemote/RaspberryPiMinecraft/master/restart.sh
+  curl -H "Accept-Encoding: identity" -L -o restart.sh $FileSource/restart.sh
   chmod +x restart.sh
   sed -i "s:dirname:$DirName:g" restart.sh
   sed -i "s<pathvariable<$PATH<g" restart.sh
 
   # Download permissions.sh from repository
   echo "Grabbing fixpermissions.sh from repository..."
-  curl -H "Accept-Encoding: identity" -L -o fixpermissions.sh https://raw.githubusercontent.com/TheRemote/RaspberryPiMinecraft/master/fixpermissions.sh
+  curl -H "Accept-Encoding: identity" -L -o fixpermissions.sh $FileSource/fixpermissions.sh
   chmod +x fixpermissions.sh
   sed -i "s:dirname:$DirName:g" fixpermissions.sh
   sed -i "s:userxname:$UserName:g" fixpermissions.sh
@@ -165,14 +167,14 @@ Update_Scripts() {
 
   # Download update.sh from repository
   echo "Grabbing update.sh from repository..."
-  curl -H "Accept-Encoding: identity" -L -o update.sh https://raw.githubusercontent.com/TheRemote/RaspberryPiMinecraft/master/update.sh
+  curl -H "Accept-Encoding: identity" -L -o update.sh $FileSource/update.sh
   chmod +x update.sh
   sed -i "s<pathvariable<$PATH<g" update.sh
 }
 
 # Updates Minecraft service
 Update_Service() {
-  sudo curl -H "Accept-Encoding: identity" -L -o /etc/systemd/system/minecraft.service https://raw.githubusercontent.com/TheRemote/RaspberryPiMinecraft/master/minecraft.service
+  sudo curl -H "Accept-Encoding: identity" -L -o /etc/systemd/system/minecraft.service $FileSource/minecraft.service
   sudo sed -i "s:userxname:$UserName:g" /etc/systemd/system/minecraft.service
   sudo sed -i "s:dirname:$DirName:g" /etc/systemd/system/minecraft.service
   sudo systemctl daemon-reload
@@ -284,7 +286,7 @@ cd "$DirName"
 if [[ -e "SetupMinecraft.sh" && "$AllowLocalCopy" -ne "1" ]]; then
   rm -f "SetupMinecraft.sh"
   echo "Local copy of SetupMinecraft.sh running.  Exiting and running online version.  To override set AllowLocalCopy=\"1\" at the top of the script."
-  curl https://raw.githubusercontent.com/TheRemote/RaspberryPiMinecraft/master/SetupMinecraft.sh | bash
+  curl $FileSource/SetupMinecraft.sh | bash
   exit 1
 fi
 
